@@ -62,13 +62,11 @@ class ClassEntity(CodeEntity):
         name: str,
         line: int,
         bases: List[str],
-        methods: List[FunctionEntity],
         decorators: List[str],
         keywords: List[str],
         type_params: List[str],
     ) -> None:
         self.bases = bases
-        self.methods = methods
         self.decorators = decorators
         self.keywords = keywords
         self.type_params = type_params
@@ -92,4 +90,10 @@ class ImportEntity(CodeEntity):
     ) -> None:
         self.module_name = module_name
         self.alias = alias
+        super().__init__(node_id, name, line)
+
+
+class VariableEntity(CodeEntity):
+    def __init__(self, node_id: int, name: str, line: int, value: Any) -> None:
+        self.value = value
         super().__init__(node_id, name, line)

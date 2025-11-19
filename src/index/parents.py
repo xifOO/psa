@@ -1,4 +1,5 @@
 import ast
+from re import M
 from typing import Dict, List, Optional, Type
 
 from entity import (
@@ -8,6 +9,7 @@ from entity import (
     FunctionEntity,
     ImportEntity,
     ModuleEntity,
+    VariableEntity,
 )
 
 NODE_ID_MAP: Dict[int, CodeEntity] = {}
@@ -58,6 +60,16 @@ class ModuleScope(Scope):
                 imports.append(child)
 
         return imports
+    
+    def get_variables(self) -> List[VariableEntity]:
+        vars = []
+
+        for child_id in CHILDREN_MAP[self.node_id]:
+            child = NODE_ID_MAP[child_id]
+            if isinstance(child, ast.Store):
+                vars.append(child)
+
+        return vars
 
 
 class ClassScope(Scope):
@@ -89,18 +101,74 @@ next_node_id = lambda: next(_node_id_gen)
 
 
 def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
-    args = []
-    for arg_node in args_node.args:
-        arg_entity = ArgumentEntity(
-            name=arg_node.arg,
-            node_id=next_node_id(),
-            line=arg_node.lineno,
-            annotation=arg_node.annotation,
-            default=None,
-            is_keyword_only=False,
-            is_positional_only=False,
+    args: List[ArgumentEntity] = []
+
+    for arg in args_node.posonlyargs:
+        args.append(
+            ArgumentEntity(
+                name=arg.arg,
+                node_id=next_node_id(),
+                line=arg.lineno,
+                annotation=arg.annotation,
+                default=None,
+                is_keyword_only=False,
+                is_positional_only=True,
+            )
         )
-        args.append(arg_entity)
+
+    for arg in args_node.args:
+        args.append(
+            ArgumentEntity(
+                name=arg.arg,
+                node_id=next_node_id(),
+                line=arg.lineno,
+                annotation=arg.annotation,
+                default=None,
+                is_keyword_only=False,
+                is_positional_only=False,
+            )
+        )
+
+    if args_node.vararg:
+        arg = args_node.vararg
+        args.append(
+            ArgumentEntity(
+                name=arg.arg,
+                node_id=next_node_id(),
+                line=arg.lineno,
+                annotation=arg.annotation,
+                default=None,
+                is_keyword_only=False,
+                is_positional_only=False,
+            )
+        )
+
+    for arg in args_node.kwonlyargs:
+        args.append(
+            ArgumentEntity(
+                name=arg.arg,
+                node_id=next_node_id(),
+                line=arg.lineno,
+                annotation=arg.annotation,
+                default=None,
+                is_keyword_only=True,
+                is_positional_only=False,
+            )
+        )
+
+    if args_node.kwarg:
+        arg = args_node.kwarg
+        args.append(
+            ArgumentEntity(
+                name=arg.arg,
+                node_id=next_node_id(),
+                line=arg.lineno,
+                annotation=arg.annotation,
+                default=None,
+                is_keyword_only=True,
+                is_positional_only=False,
+            )
+        )
 
     return args
 
@@ -109,7 +177,7 @@ def _convert_decorators(decorator_list: List[ast.expr]) -> List[str]:
     decorators = []
     for dec in decorator_list:
         if isinstance(dec, ast.Name):
-            decorators.append(dec)
+            decorators.append(dec.id)
 
     return decorators
 
@@ -168,17 +236,18 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             returns=node.returns,
             is_method=is_method,
         )
+    
     elif isinstance(node, ast.ClassDef):
         return ClassEntity(
             name=node.name,
             node_id=next_node_id(),
             line=node.lineno,
             bases=_convert_bases(node.bases),
-            methods=[],
             decorators=_convert_decorators(node.decorator_list),
             keywords=_convert_keywords(node.keywords),
             type_params=_convert_type_params(node.type_params),
         )
+    
     elif isinstance(node, (ast.Import, ast.ImportFrom)):
         return ImportEntity(
             name="import",
@@ -187,6 +256,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             module_name="...",
             alias=_convert_import_aliases(node.names),
         )
+    
     elif isinstance(node, ast.arg):
         return ArgumentEntity(
             name=node.arg,
@@ -194,6 +264,19 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             line=node.lineno,
             annotation=None,
             default=None,
+        )
+    
+    elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+        target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        var_name = "" # пока заглушка
+        if isinstance(target, ast.Name):
+            var_name = target.id
+        
+        return VariableEntity(
+            name=var_name,
+            node_id=next_node_id(),
+            line=node.lineno,
+            value=node.value
         )
 
     return None
