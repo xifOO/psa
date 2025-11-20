@@ -6,6 +6,9 @@ class CodeEntity:
         self.node_id = node_id
         self.name = name
         self.line = line
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class ArgumentEntity(CodeEntity):
@@ -43,13 +46,11 @@ class FunctionEntity(CodeEntity):
         line: int,
         args: List[ArgumentEntity],
         decorators: List[str],
-        type_params: List[str],
         returns: Optional[Any] = None,
         is_method: bool = False,
     ) -> None:
         self.args = args
         self.decorators = decorators
-        self.type_params = type_params
         self.returns = returns
         self.is_method = is_method
         super().__init__(node_id, name, line)
@@ -64,12 +65,10 @@ class ClassEntity(CodeEntity):
         bases: List[str],
         decorators: List[str],
         keywords: List[str],
-        type_params: List[str],
     ) -> None:
         self.bases = bases
         self.decorators = decorators
         self.keywords = keywords
-        self.type_params = type_params
         super().__init__(node_id, name, line)
 
 
@@ -97,3 +96,12 @@ class VariableEntity(CodeEntity):
     def __init__(self, node_id: int, name: str, line: int, value: Any) -> None:
         self.value = value
         super().__init__(node_id, name, line)
+
+
+class CallEntity(CodeEntity):
+    def __init__(self, node_id: int, name: str, line: int, args: List[str], keywords: List[str], is_method_call: bool) -> None:
+        self.args = args
+        self.keywords = keywords
+        self.is_method_call = is_method_call
+        super().__init__(node_id, name, line)
+        
