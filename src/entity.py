@@ -6,7 +6,7 @@ class CodeEntity:
         self.node_id = node_id
         self.name = name
         self.line = line
-    
+
     def __str__(self) -> str:
         return self.name
 
@@ -99,9 +99,16 @@ class VariableEntity(CodeEntity):
 
 
 class CallEntity(CodeEntity):
-    def __init__(self, node_id: int, name: str, line: int, args: List[str], keywords: List[str], is_method_call: bool) -> None:
+    def __init__(
+        self,
+        node_id: int,
+        name: str,
+        line: int,
+        args: List[str],
+        keywords: List[str],
+        is_method_call: bool,
+    ) -> None:
         self.args = args
         self.keywords = keywords
         self.is_method_call = is_method_call
         super().__init__(node_id, name, line)
-        

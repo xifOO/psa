@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Type
 
 from entity import (
     ArgumentEntity,
@@ -61,7 +61,7 @@ class ModuleScope(Scope):
                 imports.append(child)
 
         return imports
-    
+
     def get_variables(self) -> List[VariableEntity]:
         vars = []
 
@@ -96,7 +96,8 @@ class FuncScope(Scope):
         return args
 
 
-from itertools import count 
+from itertools import count
+
 _node_id_gen = count(1)
 next_node_id = lambda: next(_node_id_gen)
 
@@ -232,6 +233,7 @@ def _convert_func_name(name: ast.expr) -> str:
         return name.id
     return ""
 
+
 def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
     if isinstance(node, ast.FunctionDef):
         is_method = isinstance(parent_scope, ClassScope)
@@ -244,7 +246,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             returns=node.returns,
             is_method=is_method,
         )
-    
+
     elif isinstance(node, ast.ClassDef):
         return ClassEntity(
             name=node.name,
@@ -254,7 +256,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             decorators=_convert_decorators(node.decorator_list),
             keywords=_convert_keywords(node.keywords),
         )
-    
+
     elif isinstance(node, (ast.Import, ast.ImportFrom)):
         return ImportEntity(
             name="import",
@@ -263,7 +265,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             module_name=parent_scope.__module__,
             alias=_convert_import_aliases(node.names),
         )
-    
+
     elif isinstance(node, ast.arg):
         return ArgumentEntity(
             name=node.arg,
@@ -272,18 +274,15 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             annotation=None,
             default=None,
         )
-    
+
     elif isinstance(node, (ast.Assign, ast.AnnAssign)):
         target = node.targets[0] if isinstance(node, ast.Assign) else node.target
-        var_name = "" # пока заглушка
+        var_name = ""  # пока заглушка
         if isinstance(target, ast.Name):
             var_name = target.id
-        
+
         return VariableEntity(
-            name=var_name,
-            node_id=next_node_id(),
-            line=node.lineno,
-            value=node.value
+            name=var_name, node_id=next_node_id(), line=node.lineno, value=node.value
         )
 
     elif isinstance(node, ast.Call):
@@ -293,8 +292,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             line=node.lineno,
             args=_convert_call_args(node.args),
             keywords=_convert_keywords(node.keywords),
-            is_method_call=False
+            is_method_call=False,
         )
-            
-    return None
 
+    return None

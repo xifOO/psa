@@ -11,7 +11,7 @@ def collect_calls(scope: Scope):
     for entity in scope.entities.values():
         if isinstance(entity, CallEntity):
             CALL_MAP[entity.node_id] = entity
-    
+
     for child_id in CHILDREN_MAP.get(scope.node_id, []):
         child_scope = SCOPE_MAP.get(child_id)
         if child_scope and child_scope is not scope:
@@ -25,7 +25,7 @@ def build_call_graph() -> Dict[int, Set[int]]:
         call_scope = SCOPE_MAP.get(call_id)
         if not call_scope:
             continue
-        
+
         caller_id = call_scope.node_id
 
         callee_entity = call_scope.lookup(call_entity.name)
@@ -37,8 +37,3 @@ def build_call_graph() -> Dict[int, Set[int]]:
         graph.setdefault(caller_id, set()).add(callee_id)
 
     return graph
- 
-
-
-
-      

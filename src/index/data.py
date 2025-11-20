@@ -3,7 +3,19 @@ from typing import Dict, Set
 
 from entity import CodeEntity, ModuleEntity, VariableEntity
 from index.call import collect_calls
-from index.scopes import CHILDREN_MAP, MODULE_MAP, NODE_ID_MAP, PARENT_MAP, SCOPE_MAP, ClassScope, FuncScope, ModuleScope, Scope, next_node_id, wrap_ast_node
+from index.scopes import (
+    CHILDREN_MAP,
+    MODULE_MAP,
+    NODE_ID_MAP,
+    PARENT_MAP,
+    SCOPE_MAP,
+    ClassScope,
+    FuncScope,
+    ModuleScope,
+    Scope,
+    next_node_id,
+    wrap_ast_node,
+)
 
 
 DATAFLOW_MAP: Dict[int, Set[int]] = {}
@@ -12,17 +24,17 @@ DATAFLOW_MAP: Dict[int, Set[int]] = {}
 def _build_variable_dependencies(scope: Scope, entity: CodeEntity):
     if not isinstance(entity, VariableEntity):
         return
-    
-    rhs = entity.value  
+
+    rhs = entity.value
     names = set()
 
     for node in ast.walk(rhs):
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
             names.add(node.id)
-    
+
     if not names:
         return
-    
+
     deps = set()
 
     for name in names:
@@ -33,8 +45,9 @@ def _build_variable_dependencies(scope: Scope, entity: CodeEntity):
     if not deps:
         return
 
-    DATAFLOW_MAP.setdefault(entity.node_id, set()).update(deps)        
-    
+    DATAFLOW_MAP.setdefault(entity.node_id, set()).update(deps)
+
+
 def build_module_dataflow(module_scope: Scope):
     for _, entity in module_scope.entities.items():
         _build_variable_dependencies(module_scope, entity)
