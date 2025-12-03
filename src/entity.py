@@ -1,11 +1,16 @@
-from typing import Any, List, Optional
+import ast
+from typing import TYPE_CHECKING, Any, List, Optional
+
+if TYPE_CHECKING:
+    from index.scopes import Scope
 
 
 class CodeEntity:
-    def __init__(self, node_id: int, name: str, line: int) -> None:
+    def __init__(self, node_id: int, name: str, line: int, ast_node: ast.AST) -> None:
         self.node_id = node_id
         self.name = name
         self.line = line
+        self.ast_node = ast_node
 
     def __str__(self) -> str:
         return self.name
@@ -15,6 +20,7 @@ class ArgumentEntity(CodeEntity):
     __slots__ = (
         "name",
         "node_id",
+        "ast_node",
         "annotation",
         "default",
         "is_keyword_only",
@@ -26,6 +32,7 @@ class ArgumentEntity(CodeEntity):
         node_id: int,
         name: str,
         line: int,
+        ast_node: ast.AST,
         annotation: Optional[Any],
         default: Optional[Any],
         is_keyword_only: bool = False,
@@ -35,7 +42,7 @@ class ArgumentEntity(CodeEntity):
         self.default = default
         self.is_keyword_only = is_keyword_only
         self.is_positional_only = is_positional_only
-        super().__init__(node_id, name, line)
+        super().__init__(node_id, name, line, ast_node)
 
 
 class FunctionEntity(CodeEntity):
@@ -44,6 +51,7 @@ class FunctionEntity(CodeEntity):
         node_id: int,
         name: str,
         line: int,
+        ast_node: ast.AST,
         args: List[ArgumentEntity],
         decorators: List[str],
         returns: Optional[Any] = None,
@@ -53,7 +61,7 @@ class FunctionEntity(CodeEntity):
         self.decorators = decorators
         self.returns = returns
         self.is_method = is_method
-        super().__init__(node_id, name, line)
+        super().__init__(node_id, name, line, ast_node)
 
 
 class ClassEntity(CodeEntity):
@@ -62,6 +70,7 @@ class ClassEntity(CodeEntity):
         node_id: int,
         name: str,
         line: int,
+        ast_node: ast.AST,
         bases: List[str],
         decorators: List[str],
         keywords: List[str],
@@ -69,12 +78,12 @@ class ClassEntity(CodeEntity):
         self.bases = bases
         self.decorators = decorators
         self.keywords = keywords
-        super().__init__(node_id, name, line)
+        super().__init__(node_id, name, line, ast_node)
 
 
 class ModuleEntity(CodeEntity):
-    def __init__(self, node_id: int, name: str, line: int) -> None:
-        super().__init__(node_id, name, line)
+    def __init__(self, node_id: int, name: str, line: int, ast_node: ast.AST) -> None:
+        super().__init__(node_id, name, line, ast_node)
 
     def get_classes(self) -> List[ClassEntity]: ...
 
@@ -85,17 +94,17 @@ class ModuleEntity(CodeEntity):
 
 class ImportEntity(CodeEntity):
     def __init__(
-        self, node_id: int, name: str, line: int, module_name: str, alias: Optional[str]
+        self, node_id: int, name: str, line: int, ast_node: ast.AST, module_name: str, alias: Optional[str]
     ) -> None:
         self.module_name = module_name
         self.alias = alias
-        super().__init__(node_id, name, line)
+        super().__init__(node_id, name, line, ast_node)
 
 
 class VariableEntity(CodeEntity):
-    def __init__(self, node_id: int, name: str, line: int, value: Any) -> None:
+    def __init__(self, node_id: int, name: str, line: int, ast_node: ast.AST, value: Any) -> None:
         self.value = value
-        super().__init__(node_id, name, line)
+        super().__init__(node_id, name, line, ast_node)
 
 
 class CallEntity(CodeEntity):
@@ -104,11 +113,16 @@ class CallEntity(CodeEntity):
         node_id: int,
         name: str,
         line: int,
+        ast_node: ast.AST,
         args: List[str],
         keywords: List[str],
+        scope: "Scope",
         is_method_call: bool,
+        receiver: Optional[str] = None,
     ) -> None:
         self.args = args
         self.keywords = keywords
         self.is_method_call = is_method_call
-        super().__init__(node_id, name, line)
+        self.receiver = receiver
+        self.scope = scope
+        super().__init__(node_id, name, line, ast_node)

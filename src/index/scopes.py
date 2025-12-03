@@ -1,9 +1,8 @@
 import ast
-from typing import Dict, List, Optional, Type
+from typing import Dict, ItemsView, List, Optional, Type, ValuesView
 
 from entity import (
     ArgumentEntity,
-    CallEntity,
     ClassEntity,
     CodeEntity,
     FunctionEntity,
@@ -22,8 +21,9 @@ MODULE_MAP: Dict[int, ModuleEntity] = {}
 
 
 class Scope:
-    def __init__(self, node_id: int, parent_scope: Optional["Scope"] = None) -> None:
+    def __init__(self, node_id: int, name: str, parent_scope: Optional["Scope"] = None) -> None:
         self.node_id = node_id
+        self.name = name
         self.parent_scope = parent_scope
         self.entities: Dict[str, CodeEntity] = {}
 
@@ -32,25 +32,25 @@ class Scope:
 
     def lookup(self, name: str) -> Optional[CodeEntity]:
         entity = self.entities.get(name, None)
-
         if not entity:
             if self.parent_scope:
                 entity = self.parent_scope.lookup(name)
 
         return entity
 
-    def get_all_names(self) -> List[str]:
-        names = list(self.entities.keys())
+    def get_values(self) -> ValuesView[CodeEntity]:
+        return self.entities.values()
+    
+    def get_items(self) -> ItemsView[str, CodeEntity]:
+        return self.entities.items()
 
-        if self.parent_scope:
-            names.extend(self.parent_scope.get_all_names())
-
-        return list(set(names))
+    def __str__(self) -> str:
+        return self.name
 
 
 class ModuleScope(Scope):
-    def __init__(self, node_id: int, parent_scope: Optional[Scope] = None) -> None:
-        super().__init__(node_id, parent_scope)
+    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+        super().__init__(node_id, name, parent_scope)
 
     def get_imports(self) -> List[CodeEntity]:
         imports = []
@@ -74,16 +74,16 @@ class ModuleScope(Scope):
 
 
 class ClassScope(Scope):
-    def __init__(self, node_id: int, parent_scope: Optional[Scope] = None) -> None:
-        super().__init__(node_id, parent_scope)
+    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+        super().__init__(node_id, name, parent_scope)
 
     def define_method(self, entity: CodeEntity):
         self.define(entity)
 
 
 class FuncScope(Scope):
-    def __init__(self, node_id: int, parent_scope: Optional[Scope] = None) -> None:
-        super().__init__(node_id, parent_scope)
+    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+        super().__init__(node_id, name, parent_scope)
 
     def get_arguments(self) -> List[ArgumentEntity]:
         args = []
@@ -111,6 +111,7 @@ def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
                 name=arg.arg,
                 node_id=next_node_id(),
                 line=arg.lineno,
+                ast_node=arg,
                 annotation=arg.annotation,
                 default=None,
                 is_keyword_only=False,
@@ -124,6 +125,7 @@ def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
                 name=arg.arg,
                 node_id=next_node_id(),
                 line=arg.lineno,
+                ast_node=arg,
                 annotation=arg.annotation,
                 default=None,
                 is_keyword_only=False,
@@ -138,6 +140,7 @@ def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
                 name=arg.arg,
                 node_id=next_node_id(),
                 line=arg.lineno,
+                ast_node=arg,
                 annotation=arg.annotation,
                 default=None,
                 is_keyword_only=False,
@@ -151,6 +154,7 @@ def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
                 name=arg.arg,
                 node_id=next_node_id(),
                 line=arg.lineno,
+                ast_node=arg,
                 annotation=arg.annotation,
                 default=None,
                 is_keyword_only=True,
@@ -165,6 +169,7 @@ def _convert_args(args_node: ast.arguments) -> List[ArgumentEntity]:
                 name=arg.arg,
                 node_id=next_node_id(),
                 line=arg.lineno,
+                ast_node=arg,
                 annotation=arg.annotation,
                 default=None,
                 is_keyword_only=True,
@@ -228,10 +233,16 @@ def _convert_call_args(args: List[ast.expr]) -> List[str]:
     return args_list
 
 
-def _convert_func_name(name: ast.expr) -> str:
-    if isinstance(name, ast.Name):
-        return name.id
-    return ""
+def _convert_func_info(func: ast.expr):
+    if isinstance(func, ast.Name):
+        return ("name", func.id)
+    
+    if isinstance(func, ast.Attribute):
+        if isinstance(func.value, ast.Name):
+            return ("attr", func.value.id, func.attr)
+        return None
+    
+    return None
 
 
 def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
@@ -241,6 +252,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             name=node.name,
             node_id=next_node_id(),
             line=node.lineno,
+            ast_node=node,
             args=_convert_args(node.args),
             decorators=_convert_decorators(node.decorator_list),
             returns=node.returns,
@@ -252,6 +264,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             name=node.name,
             node_id=next_node_id(),
             line=node.lineno,
+            ast_node=node,
             bases=_convert_bases(node.bases),
             decorators=_convert_decorators(node.decorator_list),
             keywords=_convert_keywords(node.keywords),
@@ -262,6 +275,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             name="import",
             node_id=next_node_id(),
             line=node.lineno,
+            ast_node=node,
             module_name=parent_scope.__module__,
             alias=_convert_import_aliases(node.names),
         )
@@ -271,6 +285,7 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             name=node.arg,
             node_id=next_node_id(),
             line=node.lineno,
+            ast_node=node,
             annotation=None,
             default=None,
         )
@@ -282,17 +297,12 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             var_name = target.id
 
         return VariableEntity(
-            name=var_name, node_id=next_node_id(), line=node.lineno, value=node.value
-        )
-
-    elif isinstance(node, ast.Call):
-        return CallEntity(
-            node_id=next_node_id(),
-            name=_convert_func_name(node.func),
-            line=node.lineno,
-            args=_convert_call_args(node.args),
-            keywords=_convert_keywords(node.keywords),
-            is_method_call=False,
+            name=var_name, 
+            node_id=next_node_id(), 
+            line=node.lineno, 
+            ast_node=node, 
+            value=node.value
         )
 
     return None
+
