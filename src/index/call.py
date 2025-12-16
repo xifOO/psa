@@ -24,7 +24,7 @@ def collect_calls(scope: Scope):
                     func_name = child.func.id
                 elif isinstance(child.func, ast.Attribute):
                     if isinstance(child.func.value, ast.Name):
-                        receiver = current_scope.lookup(child.func.value.id).value.func.id
+                        receiver = current_scope.lookup(child.func.value.id)
                         func_name = child.func.attr
                         is_method_call = True
 
@@ -36,7 +36,7 @@ def collect_calls(scope: Scope):
                     args=_convert_call_args(child.args),
                     keywords=_convert_keywords(child.keywords),
                     is_method_call=is_method_call,
-                    receiver=receiver,
+                    receiver=receiver.name if receiver else None,
                     scope=current_scope
                 )
                 CALL_MAP[call_entity.node_id] = call_entity
