@@ -107,6 +107,19 @@ class VariableEntity(CodeEntity):
         super().__init__(node_id, name, line, ast_node)
 
 
+class GlobalDeclEntity(CodeEntity):
+    def __init__(self, node_id: int, names: list[str], line: int, ast_node: ast.Global) -> None:
+        self.names = names
+        super().__init__(node_id, "<global>", line, ast_node)
+
+
+class NonlocalDeclEntity(CodeEntity):
+    def __init__(self, node_id: int, names: list[str], line: int, ast_node: ast.Nonlocal) -> None:
+        self.names = names
+        super().__init__(node_id, "<nonlocal>", line, ast_node)
+
+
+
 class CallEntity(CodeEntity):
     def __init__(
         self,
