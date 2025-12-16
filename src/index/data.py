@@ -1,8 +1,8 @@
 import ast
 from typing import Dict, Set
 
-from entity import CodeEntity, ModuleEntity, VariableEntity
-from index.call import collect_calls
+from entity import CallEntity, CodeEntity, ModuleEntity, VariableEntity
+from index.call import CALL_MAP
 from index.scopes import (
     CHILDREN_MAP,
     MODULE_MAP,
@@ -13,6 +13,8 @@ from index.scopes import (
     FuncScope,
     ModuleScope,
     Scope,
+    _convert_call_args,
+    _convert_keywords,
     next_node_id,
     wrap_ast_node,
 )
@@ -48,31 +50,57 @@ def _build_variable_dependencies(scope: Scope, entity: CodeEntity):
     DATAFLOW_MAP.setdefault(entity.node_id, set()).update(deps)
 
 
-def build_module_dataflow(module_scope: Scope):
+def _build_module_dataflow(module_scope: Scope):
     for entity in module_scope.get_values():
         _build_variable_dependencies(module_scope, entity)
     for child_id in CHILDREN_MAP.get(module_scope.node_id, []):
         child_scope = SCOPE_MAP.get(child_id)
         if child_scope and child_scope is not module_scope:
-            build_module_dataflow(child_scope)
+            _build_module_dataflow(child_scope)
 
 
-def analyze_module(module_node: ast.Module, module_name: str):
-    node_id = next_node_id()
-    module_entity = ModuleEntity(name=module_name, line=0, node_id=node_id, ast_node=module_node)
-    module_scope = ModuleScope(node_id, module_name)
+def _collect_calls(scope: Scope):
+    for entity in scope.get_values():
+        node = entity.ast_node
+        if node is None:
+            continue
 
-    NODE_ID_MAP[node_id] = module_entity
-    SCOPE_MAP[node_id] = module_scope
-    MODULE_MAP[node_id] = module_entity
+        current_scope = SCOPE_MAP.get(entity.node_id, scope)
 
-    process_node(module_node, module_scope, parent_id=node_id)
-    build_module_dataflow(module_scope)
-    collect_calls(module_scope)
-    return module_entity, module_scope
+        for child in ast.walk(node):
+            if isinstance(child, ast.Call):
+                func_name = ""
+                receiver = None
+                is_method_call = False
+                if isinstance(child.func, ast.Name):
+                    func_name = child.func.id
+                elif isinstance(child.func, ast.Attribute):
+                    if isinstance(child.func.value, ast.Name):
+                        receiver = current_scope.lookup(child.func.value.id)
+                        func_name = child.func.attr
+                        is_method_call = True
+                
+                call_entity = CallEntity(
+                    node_id=next_node_id(),
+                    name=func_name,
+                    line=child.lineno,
+                    ast_node=child,
+                    args=_convert_call_args(child.args),
+                    keywords=_convert_keywords(child.keywords),
+                    is_method_call=is_method_call,
+                    receiver=receiver.name if receiver else None,
+                    scope=current_scope
+                )
+                CALL_MAP[call_entity.node_id] = call_entity
+                CHILDREN_MAP.setdefault(current_scope.node_id, []).append(call_entity.node_id)
+
+    for child_id in CHILDREN_MAP.get(scope.node_id, []):
+        child_scope = SCOPE_MAP.get(child_id)
+        if child_scope and child_scope is not scope:
+            _collect_calls(child_scope)
 
 
-def process_node(node: ast.AST, current_scope: Scope, parent_id: int):
+def _process_node(node: ast.AST, current_scope: Scope, parent_id: int):
     entity = wrap_ast_node(node, current_scope)
     if entity:
         node_id = entity.node_id
@@ -100,4 +128,19 @@ def process_node(node: ast.AST, current_scope: Scope, parent_id: int):
         node_id = parent_id
 
     for child in ast.iter_child_nodes(node):
-        process_node(child, scope_for_children, parent_id=node_id)
+        _process_node(child, scope_for_children, parent_id=node_id)
+
+
+def analyze_module(module_node: ast.Module, module_name: str):
+    node_id = next_node_id()
+    module_entity = ModuleEntity(name=module_name, line=0, node_id=node_id, ast_node=module_node)
+    module_scope = ModuleScope(node_id, module_name)
+
+    NODE_ID_MAP[node_id] = module_entity
+    SCOPE_MAP[node_id] = module_scope
+    MODULE_MAP[node_id] = module_entity
+
+    _process_node(module_node, module_scope, parent_id=node_id)
+    _build_module_dataflow(module_scope)
+    _collect_calls(module_scope)
+    return module_entity, module_scope
