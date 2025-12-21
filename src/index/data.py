@@ -79,7 +79,7 @@ def _collect_calls(scope: Scope):
                         receiver = current_scope.lookup(child.func.value.id)
                         func_name = child.func.attr
                         is_method_call = True
-                
+
                 call_entity = CallEntity(
                     node_id=next_node_id(),
                     name=func_name,
@@ -89,10 +89,12 @@ def _collect_calls(scope: Scope):
                     keywords=_convert_keywords(child.keywords),
                     is_method_call=is_method_call,
                     receiver=receiver.name if receiver else None,
-                    scope=current_scope
+                    scope=current_scope,
                 )
                 CALL_MAP[call_entity.node_id] = call_entity
-                CHILDREN_MAP.setdefault(current_scope.node_id, []).append(call_entity.node_id)
+                CHILDREN_MAP.setdefault(current_scope.node_id, []).append(
+                    call_entity.node_id
+                )
 
     for child_id in CHILDREN_MAP.get(scope.node_id, []):
         child_scope = SCOPE_MAP.get(child_id)
@@ -119,7 +121,7 @@ def _process_node(node: ast.AST, current_scope: Scope, parent_id: int):
             scope_to_use = new_scope
         else:
             scope_to_use = current_scope
-        
+
         current_scope.define(entity)
 
         scope_for_children = scope_to_use
@@ -133,7 +135,9 @@ def _process_node(node: ast.AST, current_scope: Scope, parent_id: int):
 
 def analyze_module(module_node: ast.Module, module_name: str):
     node_id = next_node_id()
-    module_entity = ModuleEntity(name=module_name, line=0, node_id=node_id, ast_node=module_node)
+    module_entity = ModuleEntity(
+        name=module_name, line=0, node_id=node_id, ast_node=module_node
+    )
     module_scope = ModuleScope(node_id, module_name)
 
     NODE_ID_MAP[node_id] = module_entity

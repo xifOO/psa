@@ -23,7 +23,9 @@ MODULE_MAP: Dict[int, ModuleEntity] = {}
 
 
 class Scope:
-    def __init__(self, node_id: int, name: str, parent_scope: Optional["Scope"] = None) -> None:
+    def __init__(
+        self, node_id: int, name: str, parent_scope: Optional["Scope"] = None
+    ) -> None:
         self.node_id = node_id
         self.name = name
         self.parent_scope = parent_scope
@@ -42,7 +44,7 @@ class Scope:
 
     def get_values(self) -> ValuesView[CodeEntity]:
         return self.entities.values()
-    
+
     def get_items(self) -> ItemsView[str, CodeEntity]:
         return self.entities.items()
 
@@ -51,7 +53,9 @@ class Scope:
 
 
 class ModuleScope(Scope):
-    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+    def __init__(
+        self, node_id: int, name: str, parent_scope: Optional[Scope] = None
+    ) -> None:
         super().__init__(node_id, name, parent_scope)
 
     def get_imports(self) -> List[CodeEntity]:
@@ -76,7 +80,9 @@ class ModuleScope(Scope):
 
 
 class ClassScope(Scope):
-    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+    def __init__(
+        self, node_id: int, name: str, parent_scope: Optional[Scope] = None
+    ) -> None:
         super().__init__(node_id, name, parent_scope)
 
     def define_method(self, entity: CodeEntity):
@@ -84,7 +90,9 @@ class ClassScope(Scope):
 
 
 class FuncScope(Scope):
-    def __init__(self, node_id: int, name: str, parent_scope: Optional[Scope] = None) -> None:
+    def __init__(
+        self, node_id: int, name: str, parent_scope: Optional[Scope] = None
+    ) -> None:
         super().__init__(node_id, name, parent_scope)
 
     def get_arguments(self) -> List[ArgumentEntity]:
@@ -238,12 +246,12 @@ def _convert_call_args(args: List[ast.expr]) -> List[str]:
 def _convert_func_info(func: ast.expr):
     if isinstance(func, ast.Name):
         return ("name", func.id)
-    
+
     if isinstance(func, ast.Attribute):
         if isinstance(func.value, ast.Name):
             return ("attr", func.value.id, func.attr)
         return None
-    
+
     return None
 
 
@@ -299,28 +307,21 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
             var_name = target.id
 
         return VariableEntity(
-            name=var_name, 
-            node_id=next_node_id(), 
-            line=node.lineno, 
-            ast_node=node, 
-            value=node.value
+            name=var_name,
+            node_id=next_node_id(),
+            line=node.lineno,
+            ast_node=node,
+            value=node.value,
         )
 
     elif isinstance(node, ast.Global):
         return GlobalDeclEntity(
-            node_id=next_node_id(),
-            names=node.names,
-            line=node.lineno,
-            ast_node=node
+            node_id=next_node_id(), names=node.names, line=node.lineno, ast_node=node
         )
-    
+
     elif isinstance(node, ast.Nonlocal):
         return NonlocalDeclEntity(
-            node_id=next_node_id(),
-            names=node.names,
-            line=node.lineno,
-            ast_node=node
+            node_id=next_node_id(), names=node.names, line=node.lineno, ast_node=node
         )
-    
-    return None
 
+    return None

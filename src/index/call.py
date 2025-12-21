@@ -25,4 +25,3 @@ def build_call_graph() -> Dict[str, Set[str]]:
         graph.setdefault(caller_name, set()).add(ce.name)
 
     return graph
-

@@ -94,7 +94,13 @@ class ModuleEntity(CodeEntity):
 
 class ImportEntity(CodeEntity):
     def __init__(
-        self, node_id: int, name: str, line: int, ast_node: ast.AST, module_name: str, alias: Optional[str]
+        self,
+        node_id: int,
+        name: str,
+        line: int,
+        ast_node: ast.AST,
+        module_name: str,
+        alias: Optional[str],
     ) -> None:
         self.module_name = module_name
         self.alias = alias
@@ -102,22 +108,27 @@ class ImportEntity(CodeEntity):
 
 
 class VariableEntity(CodeEntity):
-    def __init__(self, node_id: int, name: str, line: int, ast_node: ast.AST, value: Any) -> None:
+    def __init__(
+        self, node_id: int, name: str, line: int, ast_node: ast.AST, value: Any
+    ) -> None:
         self.value = value
         super().__init__(node_id, name, line, ast_node)
 
 
 class GlobalDeclEntity(CodeEntity):
-    def __init__(self, node_id: int, names: list[str], line: int, ast_node: ast.Global) -> None:
+    def __init__(
+        self, node_id: int, names: list[str], line: int, ast_node: ast.Global
+    ) -> None:
         self.names = names
         super().__init__(node_id, "<global>", line, ast_node)
 
 
 class NonlocalDeclEntity(CodeEntity):
-    def __init__(self, node_id: int, names: list[str], line: int, ast_node: ast.Nonlocal) -> None:
+    def __init__(
+        self, node_id: int, names: list[str], line: int, ast_node: ast.Nonlocal
+    ) -> None:
         self.names = names
         super().__init__(node_id, "<nonlocal>", line, ast_node)
-
 
 
 class CallEntity(CodeEntity):
