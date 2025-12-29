@@ -1,0 +1,26 @@
+{
+    "LCOM001": {
+        "name": "LCOM_INCREASE",
+        "group": "Cohesion",
+        "desc": "Prohibits an increase in LCOM (degradation of cohesion) beyond the allowed delta.",
+        "config_param": "max_lcom_increased"
+    },
+    "LCOM002": {
+        "name": "HIGH_LCOM",
+        "group": "Cohesion",
+        "desc": "Limits the maximum absolute LCOM value for a class.",
+        "config_param": "max_lcom"
+    },
+    "SE001": {
+        "name": "GLOBAL_WRITE",
+        "group": "Side Effects",
+        "desc": "Prohibits direct writes to global variables.",
+        "config_param": "max_global_writes"
+    },
+    "SE002": {
+        "name": "ARG_MUTATION",
+        "group": "Side Effects",
+        "desc": "Limits the number of mutated function arguments.",
+        "config_param": "max_arg_mutations"
+    }
+}
