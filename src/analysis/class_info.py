@@ -110,6 +110,8 @@ def analyze_class(cls: ClassEntity) -> ClassMetrics:
     attrs_read: Set[str] = set()
     attrs_written: Set[str] = set()
 
+    property_to_attr: dict[str, str] = dict()
+
     for child_id in child_ids:
         ent = NODE_ID_MAP.get(child_id)
 
@@ -145,6 +147,20 @@ def analyze_class(cls: ClassEntity) -> ClassMetrics:
                         elif state == "read":
                             attrs_read.add(str(attr_name))
 
+                elif (
+                    isinstance(node, ast.FunctionDef) and node.name in property_methods
+                ):
+                    for stmt in node.body:
+                        if isinstance(stmt, ast.Return) and isinstance(
+                            stmt.value, ast.Attribute
+                        ):
+                            if (
+                                isinstance(stmt.value.value, ast.Name)
+                                and stmt.value.value.id == "self"
+                            ):
+                                attr = stmt.value.attr
+                                property_to_attr[node.name] = attr
+
                 elif isinstance(node, ast.Subscript):
                     subscript_attr = track_subscript_attr_access(node)
                     if subscript_attr is not None:
@@ -160,7 +176,11 @@ def analyze_class(cls: ClassEntity) -> ClassMetrics:
                 elif isinstance(node, ast.Attribute):
                     if isinstance(node.value, ast.Name) and node.value.id == "self":
                         attr = node.attr
-                        method_attr_usage[method_name].add(node.attr)
+                        if attr in property_to_attr:
+                            method_attr_usage[method_name].add(property_to_attr[attr])
+                        else:
+                            method_attr_usage[method_name].add(attr)
+
                         if isinstance(node.ctx, ast.Store):
                             attrs_written.add(attr)
                             instance_attrs.add(attr)
@@ -171,6 +191,7 @@ def analyze_class(cls: ClassEntity) -> ClassMetrics:
     frozen_method_attr_usage = {
         method: frozenset(attrs) for method, attrs in method_attr_usage.items()
     }
+
     return ClassMetrics(
         instance_attrs=frozenset(instance_attrs),
         class_attrs=frozenset(class_attrs),
