@@ -1,0 +1,30 @@
+settings:
+  fail_on_error: true
+  fail_on_warning: false
+
+lcom:
+  enabled: true
+  ignore:
+    - "tests/"
+    - "migrations/"
+
+  thresholds:
+    max_lcom: 0.8
+    max_lcom_increase: 0.2
+
+  severity:
+    lcom_increase: "error"
+    high_lcom: "warning"
+
+
+side_effect:
+  enabled: true
+  ignore: []
+
+  thresholds:
+    max_global_writes: 0
+    max_arg_mutations: 2
+
+    severity:
+      global_write: "error"
+      arg_mutation: "warning"
