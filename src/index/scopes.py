@@ -316,12 +316,20 @@ def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
 
     elif isinstance(node, ast.Global):
         return GlobalDeclEntity(
-            node_id=next_node_id(), names=node.names, line=node.lineno, ast_node=node
+            name="<global>",
+            node_id=next_node_id(),
+            names=node.names,
+            line=node.lineno,
+            ast_node=node,
         )
 
     elif isinstance(node, ast.Nonlocal):
         return NonlocalDeclEntity(
-            node_id=next_node_id(), names=node.names, line=node.lineno, ast_node=node
+            name="<nonlocal>",
+            node_id=next_node_id(),
+            names=node.names,
+            line=node.lineno,
+            ast_node=node,
         )
 
     return None
