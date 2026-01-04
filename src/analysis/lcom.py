@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Dict, NamedTuple, Set
 
-from analysis.class_info import ClassMetrics
+from analysis.class_info import ClassMetrics, get_methods
 
 
 class LCOM(NamedTuple):
@@ -14,27 +14,6 @@ class LCOM(NamedTuple):
     stateless_method_count: int
 
     avg_attrs_per_method: float
-
-
-def _get_methods(metrics: ClassMetrics) -> Set[str]:
-    all_methods = metrics.public_methods.union(metrics.private_methods)
-
-    exclude = metrics.static_methods.union(
-        metrics.class_methods.union(metrics.property_methods)
-    )
-
-    methods = set()
-
-    for method in all_methods:
-        if method.startswith("__") and method.endswith("__"):
-            continue
-
-        if method in exclude:
-            continue
-
-        methods.add(method)
-
-    return methods
 
 
 def _build_method_graph(usage: Dict[str, frozenset[str]]) -> Dict[str, Set[str]]:
@@ -80,7 +59,7 @@ def _count_connected_components(graph: Dict[str, Set[str]]) -> int:
 
 
 def calculate_lcom(metrics: ClassMetrics) -> LCOM:
-    methods = _get_methods(metrics)
+    methods = get_methods(metrics)
 
     usage = {
         method: attrs
