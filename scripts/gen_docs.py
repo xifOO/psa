@@ -1,7 +1,9 @@
+from enum import Enum
 from pathlib import Path
-from config.rules import Config
 import json
 import re
+
+from src.config.rules import Config
 
 
 RULES_START = "<!-- RULES:START -->"
@@ -40,10 +42,15 @@ def generate_md_docs(config: Config, rules_metadata: dict) -> str:
                 else config.sife_effects.severity_arg_mutation
             )
 
+        sev_str = (
+            severity.value.upper()
+            if isinstance(severity, Enum)
+            else str(severity).upper()
+        )
         lines.append(
             f"| **{rid}** | `{meta['name']}` | {meta['group']} | "
             f"{meta['desc']} | `{meta['config_param']}` | "
-            f"`{severity.value.upper()}` |"
+            f"`{sev_str}` |"
         )
 
     return "\n".join(lines)
@@ -55,9 +62,7 @@ def update_readme(readme_path: Path, docs: str) -> None:
 
     if RULES_START not in content or RULES_END not in content:
         content = (
-            content.rstrip()
-            + "\n\n"
-            + f"{RULES_START}\n\n{docs}\n\n{RULES_END}\n"
+            content.rstrip() + "\n\n" + f"{RULES_START}\n\n{docs}\n\n{RULES_END}\n"
         )
     else:
         pattern = re.compile(
