@@ -22,19 +22,23 @@ class SideEffectRule(Rule):
         func_name = context.get("function_name", "Unknown")
 
         if len(diff.writes_added) > self.rules.max_global_writes:
-            violations.append(Violation(
-                rule_id="SE001",
-                severity=self.rules.severity_global_write,
-                message=f"Function {func_name} writes to global variables: {diff.writes_added}",
-                context=context,
-            ))
+            violations.append(
+                Violation(
+                    rule_id="SE001",
+                    severity=self.rules.severity_global_write,
+                    message=f"Function {func_name} writes to global variables: {diff.writes_added}",
+                    context=context,
+                )
+            )
 
         if len(diff.arg_mutates_added) > self.rules.max_arg_mutations:
-            violations.append(Violation(
-                rule_id="SE002",
-                severity=self.rules.severity_arg_mutation,
-                message=f"Function {func_name} mutates {len(diff.arg_mutates_added)} arguments",
-                context=context,
-            ))
+            violations.append(
+                Violation(
+                    rule_id="SE002",
+                    severity=self.rules.severity_arg_mutation,
+                    message=f"Function {func_name} mutates {len(diff.arg_mutates_added)} arguments",
+                    context=context,
+                )
+            )
 
         return violations
