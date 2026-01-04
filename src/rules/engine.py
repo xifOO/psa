@@ -23,15 +23,15 @@ class RuleEngine:
 
     def _has_errors(self) -> bool:
         return any(v.severity == Severity.ERROR for v in self.violations)
-    
+
     def _has_warnings(self) -> bool:
         return any(v.severity == Severity.WARNING for v in self.violations)
 
     def should_fail(self) -> bool:
         if self.config.fail_on_error and self._has_errors():
             return True
-        
+
         if self.config.fail_on_warning and self._has_warnings():
             return True
-        
+
         return False
