@@ -1,9 +1,0 @@
-import ast
-
-
-class NodeExtractor(ast.NodeVisitor):
-    def __init__(self) -> None: ...
-
-    def extract_functions(self): ...
-
-    def extract_classes(self): ...
