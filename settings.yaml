@@ -25,6 +25,21 @@ side_effect:
     max_global_writes: 0
     max_arg_mutations: 2
 
-    severity:
-      global_write: "error"
-      arg_mutation: "warning"
+  severity:
+    global_write: "error"
+    arg_mutation: "warning"
+
+
+tcc:
+  enabled: true
+  ignore:
+    - "tests/"
+    - "migrations/"
+
+  thresholds:
+    max_tcc: 0.85
+    max_tcc_increase: 0.15
+
+  severity:
+    tcc_increase: "error"
+    high_tcc: "warning"
