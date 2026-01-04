@@ -9,7 +9,7 @@ from rules.registry import register_rule
 class LCOMRule(Rule):
     def __init__(self, config: Config):
         self.rules = config.lcom
-    
+
     def applies_to(self, diff: Any) -> bool:
         return isinstance(diff, LCOMDiff)
 
@@ -21,21 +21,25 @@ class LCOMRule(Rule):
 
         class_name = context.get("class_name", "Unknown")
 
-        if diff.lcom_increased and diff.lcom_value_delta > self.rules.max_lcom_increased:
-            violations.append(Violation(
-                rule_id="LCOM001",
-                severity=self.rules.severity_lcom_increase,
-                message=f"Cohesion decreased by {diff.lcom_value_delta:.3f} in {class_name}",
-                context=context,
-            ))
+        if diff.lcom_increased and diff.lcom_value_delta > self.rules.max_lcom_increase:
+            violations.append(
+                Violation(
+                    rule_id="LCOM001",
+                    severity=self.rules.severity_lcom_increase,
+                    message=f"Cohesion decreased by {diff.lcom_value_delta:.3f} in {class_name}",
+                    context=context,
+                )
+            )
 
         new_lcom = context.get("new_lcom_value", 0)
         if new_lcom > self.rules.max_lcom:
-            violations.append(Violation(
-                rule_id="LCOM002",
-                severity=self.rules.severity_high_lcom,
-                message=f"LCOM value {new_lcom:.3f} exceeds threshold {self.rules.max_lcom} in {class_name}",
-                context=context,
-            ))
+            violations.append(
+                Violation(
+                    rule_id="LCOM002",
+                    severity=self.rules.severity_high_lcom,
+                    message=f"LCOM value {new_lcom:.3f} exceeds threshold {self.rules.max_lcom} in {class_name}",
+                    context=context,
+                )
+            )
 
         return violations
