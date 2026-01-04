@@ -31,7 +31,7 @@ def generate_md_docs(config: Config, rules_metadata: dict) -> str:
 
         if rid.startswith("LCOM"):
             severity = (
-                config.lcom.max_lcom_increase
+                config.lcom.severity_lcom_increase
                 if rid == "LCOM001"
                 else config.lcom.severity_high_lcom
             )
