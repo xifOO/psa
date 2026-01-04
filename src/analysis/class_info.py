@@ -95,6 +95,27 @@ def track_subscript_attr_access(node: ast.Subscript) -> Optional[DYNAMIC_ATTRS_T
     return None
 
 
+def get_methods(metrics: ClassMetrics) -> Set[str]:
+    all_methods = metrics.public_methods.union(metrics.private_methods)
+
+    exclude = metrics.static_methods.union(
+        metrics.class_methods.union(metrics.property_methods)
+    )
+
+    methods = set()
+
+    for method in all_methods:
+        if method.startswith("__") and method.endswith("__"):
+            continue
+
+        if method in exclude:
+            continue
+
+        methods.add(method)
+
+    return methods
+
+
 def analyze_class(cls: ClassEntity) -> ClassMetrics:
     child_ids = CHILDREN_MAP.get(cls.node_id, [])
 
