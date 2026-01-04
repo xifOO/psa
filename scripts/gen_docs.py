@@ -31,7 +31,7 @@ def generate_md_docs(config: Config, rules_metadata: dict) -> str:
 
         if rid.startswith("LCOM"):
             severity = (
-                config.lcom.severity_lcom_increase
+                config.lcom.max_lcom_increase
                 if rid == "LCOM001"
                 else config.lcom.severity_high_lcom
             )
@@ -41,12 +41,19 @@ def generate_md_docs(config: Config, rules_metadata: dict) -> str:
                 if rid == "SE001"
                 else config.sife_effects.severity_arg_mutation
             )
+        elif rid.startswith("TCC"):
+            severity = (
+                config.tcc.severity_tcc_increase
+                if rid == "TCC001"
+                else config.tcc.severity_high_tcc
+            )
 
         sev_str = (
             severity.value.upper()
             if isinstance(severity, Enum)
             else str(severity).upper()
         )
+
         lines.append(
             f"| **{rid}** | `{meta['name']}` | {meta['group']} | "
             f"{meta['desc']} | `{meta['config_param']}` | "
