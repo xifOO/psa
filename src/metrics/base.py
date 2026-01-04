@@ -1,0 +1,6 @@
+from typing import Protocol, Any
+
+
+class Analyzer(Protocol):
+    def applies_to(self, entity: Any) -> bool: ...
+    def analyze(self, entity: Any) -> Any: ...
