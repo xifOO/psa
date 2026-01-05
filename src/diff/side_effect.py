@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-from analysis.side_effect import SideEffect
+from metrics.side_effect import SideEffect
 
 
 class SideEffectDiff(NamedTuple):
