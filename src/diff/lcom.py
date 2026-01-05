@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-from analysis.lcom import LCOM
+from metrics.lcom import LCOM
 
 
 class LCOMDiff(NamedTuple):
