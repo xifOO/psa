@@ -1,6 +1,6 @@
 from typing import NamedTuple, Optional, Self
 
-from pipeline.metrics.tcc import TCC
+from metrics.tcc import TCC
 
 
 class TCCDiff(NamedTuple):
