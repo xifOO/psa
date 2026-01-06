@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
-from .classes import ClassMetrics, analyze_class, get_methods
-from .base import Analyzer
+from classes import ClassMetrics, analyze_class, get_methods
+from base import Analyzer
 from entity import ClassEntity, CodeEntity
 
 
@@ -31,7 +31,7 @@ def _calculate_connected_pairs(usage: dict[str, frozenset[str]]) -> int:
     return directly_connected_pairs
 
 
-def calculate_tcc(metrics: ClassMetrics) -> TCC:
+def _calculate_tcc(metrics: ClassMetrics) -> TCC:
     methods = get_methods(metrics)
 
     usage = {
@@ -79,11 +79,10 @@ class TCCAnalyzer(Analyzer):
     def analyze(self, entity: ClassEntity) -> tuple[TCC, dict]:
         metrics = analyze_class(entity)
 
-        tcc = calculate_tcc(metrics)
+        tcc = _calculate_tcc(metrics)
 
         context = {
             "class_name": entity.name,
-            "file_path": getattr(entity, "file_path", "unknown"),
             "line_number": entity.line,
         }
 
