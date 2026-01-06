@@ -30,8 +30,7 @@ class SideEffectAnalyzer(Analyzer):
 
         context = {
             "function_name": entity.name,
-            "file_path": getattr(entity, "file_path", "unknown"),
-            "line_number": getattr(entity, "line", -1),
+            "line_number": entity.line,
             "args": metrics.args,
             "local_vars": metrics.local_vars,
             "calls": metrics.calls,
