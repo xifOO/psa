@@ -1,14 +1,9 @@
-import ast
-from typing import Dict, ItemsView, List, Optional, ValuesView
+from typing import TYPE_CHECKING, Dict, ItemsView, Optional, ValuesView
 
-from entity import (
-    ArgumentEntity,
-    CodeEntity,
-    ImportEntity,
-    VariableEntity,
-)
+from entity import CodeEntity
 
-from maps import Index
+if TYPE_CHECKING:
+    from .maps import Index
 
 
 class Scope:
@@ -16,13 +11,19 @@ class Scope:
         self,
         node_id: int,
         name: str,
-        index: Index,
+        index: "Index",
         parent_scope: Optional["Scope"] = None,
     ) -> None:
         self.node_id = node_id
         self.name = name
         self.index = index
         self.parent_scope = parent_scope
+
+        self.children: list["Scope"] = []
+
+        if parent_scope:
+            parent_scope.children.append(self)
+
         self.entities: Dict[str, CodeEntity] = {}
 
     def define(self, entity: CodeEntity) -> None:
@@ -51,30 +52,10 @@ class ModuleScope(Scope):
         self,
         node_id: int,
         name: str,
-        index: Index,
+        index: "Index",
         parent_scope: Optional["Scope"] = None,
     ) -> None:
         super().__init__(node_id, name, index, parent_scope)
-
-    def get_imports(self) -> List[CodeEntity]:
-        imports = []
-        childrens = self.index.children_map.get(self.node_id) or []
-        for child_id in childrens:
-            child = self.index.node_map.get(child_id)
-            if isinstance(child, ImportEntity):
-                imports.append(child)
-
-        return imports
-
-    def get_variables(self) -> List[VariableEntity]:
-        vars = []
-        childrens = self.index.children_map.get(self.node_id) or []
-        for child_id in childrens:
-            child = self.index.node_map.get(child_id)
-            if isinstance(child, ast.Store):
-                vars.append(child)
-
-        return vars
 
 
 class ClassScope(Scope):
@@ -82,7 +63,7 @@ class ClassScope(Scope):
         self,
         node_id: int,
         name: str,
-        index: Index,
+        index: "Index",
         parent_scope: Optional["Scope"] = None,
     ) -> None:
         super().__init__(node_id, name, index, parent_scope)
@@ -96,18 +77,7 @@ class FuncScope(Scope):
         self,
         node_id: int,
         name: str,
-        index: Index,
+        index: "Index",
         parent_scope: Optional["Scope"] = None,
     ) -> None:
         super().__init__(node_id, name, index, parent_scope)
-
-    def get_arguments(self) -> List[ArgumentEntity]:
-        args = []
-        childrens = self.index.children_map.get(self.node_id) or []
-
-        for child_id in childrens:
-            child = self.index.node_map.get(child_id)
-            if isinstance(child, ArgumentEntity):
-                args.append(child)
-
-        return args
