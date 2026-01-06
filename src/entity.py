@@ -42,41 +42,7 @@ class ClassEntity(CodeEntity):
 
 
 @dataclass(slots=True, kw_only=True)
-class ModuleEntity(CodeEntity):
-    def get_classes(self) -> List[CodeEntity]:
-        from index.scopes import CHILDREN_MAP, NODE_ID_MAP
-
-        return [
-            NODE_ID_MAP[child_id]
-            for child_id in CHILDREN_MAP.get(self.node_id, [])
-            if isinstance(NODE_ID_MAP[child_id], ClassEntity)
-        ]
-
-    def get_functions(self) -> List[CodeEntity]:
-        from index.scopes import CHILDREN_MAP, NODE_ID_MAP
-
-        return [
-            NODE_ID_MAP[child_id]
-            for child_id in CHILDREN_MAP.get(self.node_id, [])
-            if isinstance(NODE_ID_MAP[child_id], FunctionEntity)
-        ]
-
-    def find_node_by_name(self, name: str) -> Optional[CodeEntity]:
-        from index.scopes import CHILDREN_MAP, NODE_ID_MAP
-
-        def _search(node_id: int) -> Optional[CodeEntity]:
-            node = NODE_ID_MAP.get(node_id)
-            if node is None:
-                return None
-            if node.name == name:
-                return node
-            for child_id in CHILDREN_MAP.get(node_id, []):
-                found = _search(child_id)
-                if found:
-                    return found
-            return None
-
-        return _search(self.node_id)
+class ModuleEntity(CodeEntity): ...
 
 
 @dataclass(slots=True, kw_only=True)
