@@ -12,19 +12,16 @@ class CallBuilder:
     def run(self, scope: Scope):
         self._collect_calls(scope)
 
-        for child_id in self.index.children_map.get(scope.node_id) or []:
-            child_scope = self.index.scope_map.get(child_id)
-            if child_scope:
-                self.run(child_scope)
+        for child_scope in scope.children:
+            self.run(child_scope)
 
     def _collect_calls(self, scope: Scope):
+        assert isinstance(scope, Scope)
         for entity in scope.get_values():
             node = entity.ast_node
 
             if node is None:
                 continue
-
-            current_scope = scope
 
             for child in ast.walk(node):
                 if isinstance(child, ast.Call):
@@ -36,7 +33,7 @@ class CallBuilder:
                         func_name = child.func.id
                     elif isinstance(child.func, ast.Attribute):
                         if isinstance(child.func.value, ast.Name):
-                            receiver_entity = current_scope.lookup(child.func.value.id)
+                            receiver_entity = scope.lookup(child.func.value.id)
                             receiver = receiver_entity.name if receiver_entity else None
                             func_name = child.func.attr
                             is_method_call = True
@@ -50,10 +47,8 @@ class CallBuilder:
                         keywords=_convert_keywords(child.keywords),
                         is_method_call=is_method_call,
                         receiver=receiver,
-                        scope=current_scope,
+                        scope=scope,
                     )
 
                     self.index.call_map.add(call_entity)
-                    self.index.children_map.link(
-                        current_scope.node_id, call_entity.node_id
-                    )
+                    self.index.children_map.link(scope.node_id, call_entity.node_id)
