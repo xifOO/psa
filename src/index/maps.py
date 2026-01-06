@@ -1,7 +1,7 @@
 from itertools import count
 from typing import List, Optional, Protocol, Set, TypeAlias, TypeVar, runtime_checkable
 from entity import CallEntity, CodeEntity
-from src.index.scopes import Scope
+from index.scopes import Scope
 
 
 K = TypeVar("K", contravariant=True)
@@ -42,12 +42,18 @@ class ChildrenMap(Indexable[ID, List[ID]]):
 class ScopeMap(Indexable[ID, Scope]):
     def __init__(self) -> None:
         self.scope_map: dict[ID, Scope] = {}
+        self._root: Optional[Scope] = None
 
     def add(self, scope: Scope) -> None:
         self.scope_map[scope.node_id] = scope
+        if scope.parent_scope is None:
+            self._root = scope
 
     def get(self, key: ID) -> Optional[Scope]:
         return self.scope_map.get(key, None)
+
+    def get_root(self) -> Optional[Scope]:
+        return self._root
 
 
 class CallMap(Indexable[ID, CallEntity]):
