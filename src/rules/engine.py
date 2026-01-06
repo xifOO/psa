@@ -1,8 +1,7 @@
 from typing import Any
 
 from config.rules import Config, Severity
-from rules.base import Rule, Violation
-from rules.registry import get_registered_rule
+from rules.base import Rule, Violation, get_registered_rule
 
 
 class RuleEngine:
