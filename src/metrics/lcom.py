@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Dict, NamedTuple, Set
 
-from .classes import ClassMetrics, analyze_class, get_methods
+from classes import ClassMetrics, analyze_class, get_methods
 from entity import ClassEntity, CodeEntity
 
 
@@ -112,7 +112,6 @@ class LCOMAnalyzer:
 
         context = {
             "class_name": entity.name,
-            "file_path": getattr(entity, "file_path", "unknown"),
             "line_number": entity.line,
         }
 
