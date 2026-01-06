@@ -12,16 +12,18 @@ class DataflowBuilder:
         for entity in scope.get_values():
             self._build_variable_dependencies(scope, entity)
 
-        for child_id in self.index.children_map.get(scope.node_id) or []:
-            child_scope = self.index.scope_map.get(child_id)
-            if child_scope:
-                self.run(child_scope)
+        for child_scope in scope.children:
+            self.run(child_scope)
 
     def _build_variable_dependencies(self, scope: Scope, entity: CodeEntity):
         if not isinstance(entity, VariableEntity):
             return
 
         deps = set()
+
+        if entity.value is None:
+            return
+
         for node in ast.walk(entity.value):
             if isinstance(node, ast.Name):
                 dep = scope.lookup(node.id)
