@@ -2,10 +2,8 @@ from typing import Any
 from config.rules import Config
 from diff.lcom import LCOMDiff
 from rules.base import Rule, Violation
-from rules.registry import register_rule
 
 
-@register_rule
 class LCOMRule(Rule):
     def __init__(self, config: Config):
         self.rules = config.lcom
