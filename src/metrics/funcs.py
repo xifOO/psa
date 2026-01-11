@@ -8,8 +8,7 @@ from entity import (
     NonlocalDeclEntity,
     VariableEntity,
 )
-from index.call import CALL_MAP
-from index.scopes import CHILDREN_MAP, NODE_ID_MAP
+from index.maps import Index
 
 
 ArgName: TypeAlias = str
@@ -43,8 +42,8 @@ MUTATING_METHODS = {
 }
 
 
-def analyze_func(func: FunctionEntity) -> FuncMetrics:
-    child_ids = CHILDREN_MAP.get(func.node_id, [])
+def analyze_func(index: Index, func: FunctionEntity) -> FuncMetrics:
+    child_ids = index.children_map.get(func.node_id)
 
     global_names: Set[str] = set()
     nonlocal_names: Set[str] = set()
@@ -57,8 +56,8 @@ def analyze_func(func: FunctionEntity) -> FuncMetrics:
 
     variable_entities: List[VariableEntity] = []
 
-    for child_id in child_ids:
-        ent = NODE_ID_MAP.get(child_id) or CALL_MAP.get(child_id)
+    for child_id in child_ids if child_ids else []:
+        ent = index.node_map.get(child_id) or index.call_map.get(child_id)
 
         if isinstance(ent, VariableEntity):
             variable_entities.append(ent)
