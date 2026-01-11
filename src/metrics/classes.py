@@ -1,6 +1,6 @@
 import ast
 from types import EllipsisType
-from typing import Dict, NamedTuple, Optional, Set, TypeAlias, Tuple, Union
+from typing import Dict, Final, NamedTuple, Optional, Set, TypeAlias, Tuple, Union
 
 from entity import ClassEntity, FunctionEntity
 from index.maps import Index
@@ -9,7 +9,7 @@ from index.maps import Index
 STATE: TypeAlias = str
 ATTR_NAME: TypeAlias = Union[str, bytes, bool, int, float, complex, None, EllipsisType]
 DYNAMIC_ATTRS_TUPLE: TypeAlias = Tuple[STATE, ATTR_NAME]
-ATTR_FUNCS = {"setattr": "write", "delattr": "write", "getattr": "read"}
+ATTR_FUNCS: Final = {"setattr": "write", "delattr": "write", "getattr": "read"}
 
 
 class ClassMetrics(NamedTuple):
