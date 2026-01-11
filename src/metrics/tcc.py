@@ -80,7 +80,6 @@ class TCCAnalyzer(Analyzer):
 
     def analyze(self, index: Index, entity: ClassEntity) -> tuple[TCC, dict]:
         metrics = analyze_class(index, entity)
-        print(metrics)
         tcc = _calculate_tcc(metrics)
 
         context = {
