@@ -1,8 +1,9 @@
 from typing import NamedTuple
 
 from entity import CodeEntity, FunctionEntity
-from base import Analyzer
-from funcs import analyze_func
+from index.maps import Index
+from .base import Analyzer
+from .funcs import analyze_func
 
 
 class SideEffect(NamedTuple):
@@ -16,8 +17,8 @@ class SideEffectAnalyzer(Analyzer):
     def applies_to(self, entity: CodeEntity) -> bool:
         return isinstance(entity, FunctionEntity)
 
-    def analyze(self, entity: FunctionEntity) -> tuple[SideEffect, dict]:
-        metrics = analyze_func(entity)
+    def analyze(self, index: Index, entity: FunctionEntity) -> tuple[SideEffect, dict]:
+        metrics = analyze_func(index, entity)
 
         side_effect = SideEffect(
             reads=metrics.attrs_read,
