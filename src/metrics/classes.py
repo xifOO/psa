@@ -3,7 +3,7 @@ from types import EllipsisType
 from typing import Dict, NamedTuple, Optional, Set, TypeAlias, Tuple, Union
 
 from entity import ClassEntity, FunctionEntity
-from index.scopes import CHILDREN_MAP, NODE_ID_MAP
+from index.maps import Index
 
 
 STATE: TypeAlias = str
@@ -25,9 +25,6 @@ class ClassMetrics(NamedTuple):
     attrs_written: frozenset[str]
 
     method_attr_usage: dict[str, frozenset[str]]
-
-
-CLASS_METRICS_MAP: Dict[int, ClassMetrics] = {}
 
 
 def track_dynamic_attr_usage(node: ast.Call) -> Optional[DYNAMIC_ATTRS_TUPLE]:
@@ -116,8 +113,8 @@ def get_methods(metrics: ClassMetrics) -> Set[str]:
     return methods
 
 
-def analyze_class(cls: ClassEntity) -> ClassMetrics:
-    child_ids = CHILDREN_MAP.get(cls.node_id, [])
+def analyze_class(index: Index, cls: ClassEntity) -> ClassMetrics:
+    child_ids = index.children_map.get(cls.node_id)
 
     instance_attrs: Set[str] = set()
     class_attrs: Set[str] = set()
@@ -133,8 +130,8 @@ def analyze_class(cls: ClassEntity) -> ClassMetrics:
 
     property_to_attr: dict[str, str] = dict()
 
-    for child_id in child_ids:
-        ent = NODE_ID_MAP.get(child_id)
+    for child_id in child_ids if child_ids else []:
+        ent = index.node_map.get(child_id)
 
         if isinstance(ent, FunctionEntity) and ent.is_method:
             method_name = ent.name
