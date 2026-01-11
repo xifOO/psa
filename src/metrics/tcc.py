@@ -1,7 +1,9 @@
 from typing import NamedTuple
 
-from classes import ClassMetrics, analyze_class, get_methods
-from base import Analyzer
+from index.maps import Index
+
+from .classes import ClassMetrics, analyze_class, get_methods
+from .base import Analyzer
 from entity import ClassEntity, CodeEntity
 
 
@@ -76,9 +78,9 @@ class TCCAnalyzer(Analyzer):
     def applies_to(self, entity: CodeEntity) -> bool:
         return isinstance(entity, ClassEntity)
 
-    def analyze(self, entity: ClassEntity) -> tuple[TCC, dict]:
-        metrics = analyze_class(entity)
-
+    def analyze(self, index: Index, entity: ClassEntity) -> tuple[TCC, dict]:
+        metrics = analyze_class(index, entity)
+        print(metrics)
         tcc = _calculate_tcc(metrics)
 
         context = {
