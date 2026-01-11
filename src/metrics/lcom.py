@@ -1,7 +1,10 @@
 from collections import deque
 from typing import Dict, NamedTuple, Set
 
-from classes import ClassMetrics, analyze_class, get_methods
+from index.maps import Index
+from .base import Analyzer
+
+from .classes import ClassMetrics, analyze_class, get_methods
 from entity import ClassEntity, CodeEntity
 
 
@@ -101,12 +104,12 @@ def calculate_lcom(metrics: ClassMetrics) -> LCOM:
     )
 
 
-class LCOMAnalyzer:
+class LCOMAnalyzer(Analyzer):
     def applies_to(self, entity: CodeEntity) -> bool:
         return isinstance(entity, ClassEntity)
 
-    def analyze(self, entity: ClassEntity) -> tuple[LCOM, dict]:
-        metrics = analyze_class(entity)
+    def analyze(self, index: Index, entity: ClassEntity) -> tuple[LCOM, dict]:
+        metrics = analyze_class(index, entity)
 
         lcom = calculate_lcom(metrics)
 
