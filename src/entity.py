@@ -1,9 +1,10 @@
 import ast
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 
 if TYPE_CHECKING:
+    from node import ExprInfo
     from index.scopes import Scope
 
 
@@ -68,8 +69,8 @@ class NonlocalDeclEntity(CodeEntity):
 
 @dataclass(slots=True, kw_only=True)
 class CallEntity(CodeEntity):
-    args: List[str] = field(default_factory=list)
-    keywords: List[str] = field(default_factory=list)
+    args: List["ExprInfo"] = field(default_factory=list)
+    keywords: Dict[str, "ExprInfo"] = field(default_factory=dict)
     scope: "Scope" = field(repr=False)
     is_method_call: bool = False
     receiver: Optional[str] = None
