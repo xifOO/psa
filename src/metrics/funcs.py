@@ -1,20 +1,32 @@
-import ast
-from typing import List, NamedTuple, Set, TypeAlias
+from typing import Final, NamedTuple, Set, TypeAlias
 
 from entity import (
     CallEntity,
     FunctionEntity,
     GlobalDeclEntity,
     NonlocalDeclEntity,
-    VariableEntity,
 )
 from index.maps import Index
+from node import AssignVisitor, ExprEffectsVisitor
 
 
 ArgName: TypeAlias = str
 MethodName: TypeAlias = str
 ObjectName: TypeAlias = str
 AttrName: TypeAlias = str
+
+
+MUTATING_METHODS: Final = {
+    "append",
+    "extend",
+    "insert",
+    "remove",
+    "pop",
+    "update",
+    "clear",
+    "add",
+    "discard",
+}
 
 
 class FuncMetrics(NamedTuple):
@@ -29,45 +41,23 @@ class FuncMetrics(NamedTuple):
     calls: frozenset[str]
 
 
-MUTATING_METHODS = {
-    "append",
-    "extend",
-    "insert",
-    "remove",
-    "pop",
-    "update",
-    "clear",
-    "add",
-    "discard",
-}
-
-
 def analyze_func(index: Index, func: FunctionEntity) -> FuncMetrics:
     child_ids = index.children_map.get(func.node_id)
 
     global_names: Set[str] = set()
     nonlocal_names: Set[str] = set()
-    local_vars: Set[str] = set()
-    attrs_read: Set[str] = set()
-    attrs_written: Set[str] = set()
-    attr_mutates: Set[tuple[str, str]] = set()
-    arg_mutates: Set[tuple[str, str]] = set()
+    arg_names_set = {arg.name for arg in func.args}
     calls: Set[str] = set()
-
-    variable_entities: List[VariableEntity] = []
+    arg_mutates: Set[tuple[str, str]] = set()
 
     for child_id in child_ids if child_ids else []:
         ent = index.node_map.get(child_id) or index.call_map.get(child_id)
 
-        if isinstance(ent, VariableEntity):
-            variable_entities.append(ent)
-
-        elif isinstance(ent, CallEntity):
+        if isinstance(ent, CallEntity):
             calls.add(ent.name)
-            arg_names = {arg.name for arg in func.args}
             if (
                 ent.is_method_call
-                and ent.receiver in arg_names
+                and ent.receiver in arg_names_set
                 and ent.name in MUTATING_METHODS
             ):
                 arg_mutates.add((ent.receiver, ent.name))
@@ -78,58 +68,31 @@ def analyze_func(index: Index, func: FunctionEntity) -> FuncMetrics:
         elif isinstance(ent, NonlocalDeclEntity):
             nonlocal_names.update(ent.names)
 
-    arg_names_set = {arg.name for arg in func.args}
-    for var in variable_entities:
-        var_name = var.name
-        if var_name not in global_names and var_name not in nonlocal_names:
-            local_vars.add(var_name)
+    assign_visitor = AssignVisitor(
+        args=arg_names_set,
+        globals=global_names,
+        nonlocals=nonlocal_names,
+    )
+    assign_visitor.visit(func.ast_node)
 
-        node = var.ast_node
-        target = None
-        if isinstance(node, ast.Assign):
-            target = node.targets[0]
-        elif isinstance(node, ast.AnnAssign):
-            target = node.target
+    expr_visitor = ExprEffectsVisitor(
+        args=arg_names_set,
+        globals=global_names,
+        nonlocals=nonlocal_names,
+    )
+    expr_visitor.visit(func.ast_node)
 
-        if isinstance(target, ast.Attribute):
-            if isinstance(target.value, ast.Name):
-                obj_name = target.value.id
-                if obj_name in global_names | nonlocal_names | arg_names_set:
-                    attr_mutates.add((obj_name, target.attr))
-                else:
-                    attrs_written.add(f"{obj_name}.{target.attr}")
-
-        elif isinstance(target, ast.Subscript):
-            value = target.value
-            if isinstance(value, ast.Name):
-                obj_name = value.id
-                if obj_name in global_names | nonlocal_names | arg_names_set:
-                    attr_mutates.add((obj_name, "__setitem__"))
-                else:
-                    attrs_written.add(f"{obj_name}.__setitem__")
-
-    for node in ast.walk(func.ast_node):
-        if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-            if isinstance(node.value, ast.Name):
-                obj_name = node.value.id
-                if obj_name in arg_names_set | global_names | nonlocal_names:
-                    attr_mutates.add((obj_name, node.attr))
-                else:
-                    attrs_read.add(f"{obj_name}.{node.attr}")
-
-        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
-            if node.id in global_names:
-                attrs_read.add(node.id)
+    attr_mutates = assign_visitor.attr_mutates | expr_visitor.attr_mutates
 
     metrics = FuncMetrics(
         args=frozenset(arg_names_set),
         globals_written=frozenset(global_names),
         nonlocals_written=frozenset(nonlocal_names),
-        attrs_read=frozenset(attrs_read),
-        attrs_written=frozenset(attrs_written),
+        attrs_read=frozenset(expr_visitor.attrs_read),
+        attrs_written=frozenset(assign_visitor.attrs_written),
         attr_mutates=frozenset(attr_mutates),
         arg_mutates=frozenset(arg_mutates),
-        local_vars=frozenset(local_vars),
+        local_vars=frozenset(assign_visitor.locals_written),
         calls=frozenset(calls),
     )
 
