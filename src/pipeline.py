@@ -2,13 +2,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 from config.rules import Config
 from index.extractor import Extractor
-from builders.ast_builder import ASTBuilder
 from index.maps import Index
-from builders.call import CallBuilder
-from builders.dataflow import DataflowBuilder
 from entity import CodeEntity
 from index.collector import EntityCollector
 from metrics.base import Analyzer
+from node import ASTVisitor, CallVisitor
 
 
 class Pipeline:
@@ -32,14 +30,11 @@ class Pipeline:
     def _build_index(self, tree, module_name: str) -> Index:
         index = Index()
 
-        ast_builder = ASTBuilder(index)
+        ast_builder = ASTVisitor(index)
         module_scope = ast_builder.build_module(tree, module_name)
 
-        call_builder = CallBuilder(index)
-        call_builder.run(module_scope)
-
-        dataflow_builder = DataflowBuilder(index)
-        dataflow_builder.run(module_scope)
+        call_builder = CallVisitor(index, module_scope)
+        call_builder.visit(tree)
 
         return index
 
