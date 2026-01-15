@@ -140,28 +140,6 @@ def _convert_import_aliases(names: List[ast.alias]) -> Optional[str]:
     return first.asname if first.asname is not None else first.name
 
 
-def _convert_call_args(args: List[ast.expr]) -> List[str]:
-    args_list = []
-    for node in args:
-        if isinstance(node, ast.Constant):
-            args_list.append(node.value)
-        if isinstance(node, ast.Name):
-            args_list.append(node.id)
-    return args_list
-
-
-def _convert_func_info(func: ast.expr):
-    if isinstance(func, ast.Name):
-        return ("name", func.id)
-
-    if isinstance(func, ast.Attribute):
-        if isinstance(func.value, ast.Name):
-            return ("attr", func.value.id, func.attr)
-        return None
-
-    return None
-
-
 def wrap_ast_node(node: ast.AST, parent_scope: Optional[Scope] = None):
     if isinstance(node, ast.FunctionDef):
         is_method = isinstance(parent_scope, ClassScope)
