@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 from config.rules import Config
 from reporters.base import BaseReporter
@@ -22,13 +22,13 @@ class Runner:
         for path in self.root.rglob("*.py"):
             yield path
 
-    def run(self) -> None:
+    def run(self) -> List[Dict[str, Any]]:
         results = []
 
         for file_path in self.iter_python_files():
             try:
-                results = self.pipeline.process_file(file_path)
-                results.extend(results)
+                file_results = self.pipeline.process_file(file_path)
+                results.extend(file_results)
             except Exception as e:
                 results.append(
                     {
@@ -36,3 +36,5 @@ class Runner:
                         "error": str(e),
                     }
                 )
+
+        return results
