@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import re
 
-from src.config.rules import Config
+from psa.config.rules import Config
 
 
 RULES_START = "<!-- RULES:START -->"
